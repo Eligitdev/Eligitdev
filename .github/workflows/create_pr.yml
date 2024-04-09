@@ -28,7 +28,7 @@ jobs:
           PR_TITLE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
           /usr/local/bin/hub pull-request -b master -h "$SOURCE_BRANCH" -m "$PR_TITLE"
         env:
-          GITHUB_TOKEN: ${{ secrets.CSLS_GIT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUB_PROTOCOL: "https"
 
       - name: Handle errors
