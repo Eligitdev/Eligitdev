@@ -1,0 +1,38 @@
+name: Create PR in Master from Demo Branch
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  create_pr_in_master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install hub using wget
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/github/hub/releases/download/v2.14.2/hub-linux-amd64-2.14.2.tgz
+          tar -xvf hub-linux-amd64-2.14.2.tgz
+          sudo mv hub-linux-amd64-2.14.2/bin/hub /usr/local/bin/hub
+
+      - name: Check if PR was merged
+        if: github.event.pull_request.merged == true
+        run: |
+          PR_NUMBER=$(jq -r '.number' "$GITHUB_EVENT_PATH")
+          SOURCE_BRANCH=$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+          PR_TITLE=$(jq -r '.pull_request.title' "$GITHUB_EVENT_PATH")
+          /usr/local/bin/hub pull-request -b master -h "$SOURCE_BRANCH" -m "$PR_TITLE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.CSLS_GIT_TOKEN }}
+          HUB_PROTOCOL: "https"
+
+      - name: Handle errors
+        if: failure()
+        run: |
+          echo "Error creating pull request: ${{ job.status }}"
+          exit 1
